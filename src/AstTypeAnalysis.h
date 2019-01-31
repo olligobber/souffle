@@ -34,6 +34,17 @@ private:
     std::map<const AstArgument*, AnalysisType> argumentTypes;
     TypeLattice lattice;
 
+    /**
+     * Analyse the given clause and computes for each contained argument a potential type. If the type is a
+     * bottom or top type, no consistent typing can be found and the rule can not be properly typed.
+     *
+     * @param lat a lattice containing available types
+     * @param clause the clause to be typed
+     * @return a map mapping each contained argument to a type
+     */
+    static std::map<const AstArgument*, AnalysisType> analyseTypes(
+            const TypeLattice& lat, const AstClause& clause);
+
 public:
     static constexpr const char* name = "type-analysis";
 
@@ -49,17 +60,6 @@ public:
         assert(found != argumentTypes.end());
         return found->second;
     }
-
-    /**
-     * Analyse the given clause and computes for each contained argument a potential type. If the type is a
-     * bottom or top type, no consistent typing can be found and the rule can not be properly typed.
-     *
-     * @param lat a lattice containing available types
-     * @param clause the clause to be typed
-     * @return a map mapping each contained argument to a type
-     */
-    static std::map<const AstArgument*, AnalysisType> analyseTypes(
-            const TypeLattice& lat, const AstClause& clause);
 };
 
 }  // end of namespace souffle
