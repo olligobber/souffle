@@ -19,6 +19,7 @@
 #include "AstAnalysis.h"
 #include "AstTypeEnvironmentAnalysis.h"
 #include "TypeLattice.h"
+#include "TypeSystem.h"
 #include <map>
 #include <ostream>
 
@@ -46,6 +47,8 @@ private:
             const AstClause& clause, const AstProgram& program, std::ostream* debugStream = nullptr);
 
 public:
+    TypeAnalysis(const TypeEnvironment& env) : argumentTypes(), lattice(env){};
+
     static constexpr const char* name = "type-analysis";
 
     void run(const AstTranslationUnit& translationUnit) override;
