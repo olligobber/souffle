@@ -17,10 +17,13 @@
 #pragma once
 
 #include "RamCondition.h"
+#include "RamConditionLevel.h"
+#include "RamConstValue.h"
 #include "RamNode.h"
 #include "RamRelation.h"
 #include "RamTypes.h"
 #include "RamValue.h"
+#include "RamValueLevel.h"
 #include "Util.h"
 #include <cassert>
 #include <cstddef>
@@ -37,10 +40,6 @@ namespace souffle {
 class RamOperation : public RamNode {
 public:
     RamOperation(RamNodeType type) : RamNode(type) {}
-
-    /** Get depth */
-    // TODO (#541): move to analysis
-    virtual size_t getDepth() const = 0;
 
     /** Print */
     virtual void print(std::ostream& os, int tabpos) const = 0;
@@ -74,11 +73,6 @@ class RamNestedOperation : public RamOperation {
 public:
     RamNestedOperation(RamNodeType type, std::unique_ptr<RamOperation> nested)
             : RamOperation(type), nestedOperation(std::move(nested)) {}
-
-    /** Get depth of query */
-    size_t getDepth() const override {
-        return 1 + nestedOperation->getDepth();
-    }
 
     /** Get nested operation */
     RamOperation& getOperation() const {
@@ -397,6 +391,10 @@ protected:
  * Aggregation
  */
 class RamAggregate : public RamSearch {
+    RamConstValueAnalysis* rcva;
+    RamConditionLevelAnalysis* rcla;
+    RamValueLevelAnalysis* rvla;
+
 public:
     /** Types of aggregation functions */
     enum Function { MAX, MIN, COUNT, SUM };
@@ -462,6 +460,9 @@ public:
     SearchColumns getRangeQueryColumns() const {
         return keys;
     }
+
+    /** Get indexable element */
+    std::unique_ptr<RamValue> getIndexElement(RamCondition* c, size_t& element, size_t level);
 
     /** Add condition */
     void addCondition(std::unique_ptr<RamCondition> newCondition);
@@ -667,11 +668,6 @@ public:
         return toPtrVector(values);
     }
 
-    /** Get depth */
-    size_t getDepth() const override {
-        return 1;
-    }
-
     /** Print */
     void print(std::ostream& os, int tabpos) const override {
         const std::string tabs(tabpos, '\t');
@@ -752,10 +748,6 @@ public:
         }
 
         os << ")";
-    }
-
-    size_t getDepth() const override {
-        return 1;
     }
 
     void addValue(std::unique_ptr<RamValue> val) {

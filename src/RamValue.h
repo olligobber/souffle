@@ -34,21 +34,9 @@ namespace souffle {
 /**
  * Abstract class for describing scalar values in RAM
  */
-// TODO (#541): Remove isConstant() and make an analysis for RAM
 class RamValue : public RamNode {
-protected:
-    bool cnst;
-
 public:
-    RamValue(RamNodeType type, bool isCnst) : RamNode(type), cnst(isCnst) {}
-
-    /** get level of value (which for-loop of a query) */
-    virtual size_t getLevel() const = 0;
-
-    /** Determines whether this value is a constant or not */
-    bool isConstant() const {
-        return cnst;
-    }
+    RamValue(RamNodeType type) : RamNode(type) {}
 
     /** Create clone */
     RamValue* clone() const override = 0;
@@ -69,11 +57,7 @@ private:
 
 public:
     template <typename... Args>
-    RamIntrinsicOperator(FunctorOp op, Args... args)
-            : RamValue(RN_IntrinsicOperator,
-                      all_of(args...,
-                              [](const std::unique_ptr<RamValue>& a) { return a && a->isConstant(); })),
-              operation(op) {
+    RamIntrinsicOperator(FunctorOp op, Args... args) : RamValue(RN_IntrinsicOperator), operation(op) {
         std::unique_ptr<RamValue> tmp[] = {std::move(args)...};
         for (auto& cur : tmp) {
             arguments.push_back(std::move(cur));
@@ -81,9 +65,7 @@ public:
     }
 
     RamIntrinsicOperator(FunctorOp op, std::vector<std::unique_ptr<RamValue>> args)
-            : RamValue(RN_IntrinsicOperator,
-                      all_of(args, [](const std::unique_ptr<RamValue>& a) { return a && a->isConstant(); })),
-              operation(op), arguments(std::move(args)) {}
+            : RamValue(RN_IntrinsicOperator), operation(op), arguments(std::move(args)) {}
 
     /** Print */
     void print(std::ostream& os) const override {
@@ -115,18 +97,6 @@ public:
 
     size_t getArgCount() const {
         return arguments.size();
-    }
-
-    /** Get level */
-    // TODO (#541): move to an analysis
-    size_t getLevel() const override {
-        size_t level = 0;
-        for (const auto& arg : arguments) {
-            if (arg != nullptr) {
-                level = std::max(level, arg->getLevel());
-            }
-        }
-        return level;
     }
 
     /** Obtain list of child nodes */
@@ -170,7 +140,6 @@ class RamUserDefinedOperator : public RamValue {
 private:
     /** Argument of unary function */
     std::vector<std::unique_ptr<RamValue>> arguments;
-
     /** Name of user-defined unary functor */
     const std::string name;
 
@@ -180,9 +149,7 @@ private:
 public:
     RamUserDefinedOperator(
             const std::string& n, const std::string& t, std::vector<std::unique_ptr<RamValue>> args)
-            : RamValue(RN_UserDefinedOperator,
-                      all_of(args, [](const std::unique_ptr<RamValue>& a) { return a && a->isConstant(); })),
-              arguments(std::move(args)), name(n), type(t) {}
+            : RamValue(RN_UserDefinedOperator), arguments(std::move(args)), name(n), type(t) {}
 
     /** Print */
     void print(std::ostream& os) const override {
@@ -212,18 +179,6 @@ public:
 
     const std::string& getType() const {
         return type;
-    }
-
-    /** Get level */
-    // TODO (#541): move to an analysis
-    size_t getLevel() const override {
-        size_t level = 0;
-        for (const auto& arg : arguments) {
-            if (arg != nullptr) {
-                level = std::max(level, arg->getLevel());
-            }
-        }
-        return level;
     }
 
     /** Obtain list of child nodes */
@@ -279,7 +234,7 @@ private:
 
 public:
     RamElementAccess(size_t l, size_t e, std::string n = "")
-            : RamValue(RN_ElementAccess, false), level(l), element(e), name(std::move(n)) {}
+            : RamValue(RN_ElementAccess), level(l), element(e), name(std::move(n)) {}
 
     /** Print */
     void print(std::ostream& os) const override {
@@ -291,7 +246,7 @@ public:
     }
 
     /** Get level */
-    size_t getLevel() const override {
+    size_t getLevel() const {
         return level;
     }
 
@@ -337,7 +292,7 @@ class RamNumber : public RamValue {
     RamDomain constant;
 
 public:
-    RamNumber(RamDomain c) : RamValue(RN_Number, true), constant(c) {}
+    RamNumber(RamDomain c) : RamValue(RN_Number), constant(c) {}
 
     /** Get constant */
     // TODO (#541):  move to analysis
@@ -348,12 +303,6 @@ public:
     /** Print */
     void print(std::ostream& os) const override {
         os << "number(" << constant << ")";
-    }
-
-    /** Get level */
-    // TODO (#541): move to analysis
-    size_t getLevel() const override {
-        return 0;
     }
 
     /** Obtain list of child nodes */
@@ -387,17 +336,11 @@ protected:
  */
 class RamAutoIncrement : public RamValue {
 public:
-    RamAutoIncrement() : RamValue(RN_AutoIncrement, false) {}
+    RamAutoIncrement() : RamValue(RN_AutoIncrement) {}
 
     /** Print */
     void print(std::ostream& os) const override {
         os << "autoinc()";
-    }
-
-    /** Get level */
-    // TODO (#541): move to analysis
-    size_t getLevel() const override {
-        return 0;
     }
 
     /** Obtain list of child nodes */
@@ -432,10 +375,7 @@ private:
     std::vector<std::unique_ptr<RamValue>> arguments;
 
 public:
-    RamPack(std::vector<std::unique_ptr<RamValue>> args)
-            : RamValue(RN_Pack,
-                      all_of(args, [](const std::unique_ptr<RamValue>& a) { return a && a->isConstant(); })),
-              arguments(std::move(args)) {}
+    RamPack(std::vector<std::unique_ptr<RamValue>> args) : RamValue(RN_Pack), arguments(std::move(args)) {}
 
     /** Get values */
     // TODO (#541): remove getter
@@ -455,18 +395,6 @@ public:
                 out << "_";
             }
         }) << "]";
-    }
-
-    /** Get level */
-    // TODO (#541): move to analysis
-    size_t getLevel() const override {
-        size_t level = 0;
-        for (const auto& arg : arguments) {
-            if (arg) {
-                level = std::max(level, arg->getLevel());
-            }
-        }
-        return level;
     }
 
     /** Obtain list of child nodes */
@@ -523,7 +451,7 @@ class RamArgument : public RamValue {
     size_t number;
 
 public:
-    RamArgument(size_t number) : RamValue(RN_Argument, false), number(number) {}
+    RamArgument(size_t number) : RamValue(RN_Argument), number(number) {}
 
     /** Get argument number */
     size_t getArgCount() const {
@@ -533,12 +461,6 @@ public:
     /** Print */
     void print(std::ostream& os) const override {
         os << "argument(" << number << ")";
-    }
-
-    /** Get level */
-    // TODO (#541): move to an analysis
-    size_t getLevel() const override {
-        return 0;
     }
 
     /** Obtain list of child nodes */

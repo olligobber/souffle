@@ -558,21 +558,21 @@ class AstTypeCast : public AstArgument {
     std::unique_ptr<AstArgument> value;
 
     /** The target type name */
-    std::string type;
+    AstTypeIdentifier type;
 
 public:
-    AstTypeCast(std::unique_ptr<AstArgument> value, std::string type)
-            : value(std::move(value)), type(std::move(type)) {}
+    AstTypeCast(std::unique_ptr<AstArgument> value, const AstTypeIdentifier& type)
+            : value(std::move(value)), type(type) {}
 
     void print(std::ostream& os) const override {
-        os << *value << " as " << type;
+        os << " as " << type << *value;
     }
 
     AstArgument* getValue() const {
         return value.get();
     }
 
-    const std::string& getType() const {
+    const AstTypeIdentifier& getType() const {
         return type;
     }
 
