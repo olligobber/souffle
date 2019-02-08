@@ -255,7 +255,7 @@ public:
 
     /**  Print argument to the given output stream */
     void print(std::ostream& os) const override {
-        os << '-';
+        os << "nil";
     }
 
     /** Creates a clone of this AST sub-structure */
@@ -485,10 +485,23 @@ class AstRecordInit : public AstArgument {
     /** The list of components to be aggregated into a record */
     std::vector<std::unique_ptr<AstArgument>> args;
 
+    /** The type of record being construted */
+    AstTypeIdentifier type;
+
 public:
     AstRecordInit() = default;
 
+    AstRecordInit(const AstTypeIdentifier& type) : type(type) {}
+
     ~AstRecordInit() override = default;
+
+    void setType(const AstTypeIdentifier& t) {
+        type = t;
+    }
+
+    AstTypeIdentifier getType() const {
+        return type;
+    }
 
     void add(std::unique_ptr<AstArgument> arg) {
         args.push_back(std::move(arg));
@@ -499,12 +512,12 @@ public:
     }
 
     void print(std::ostream& os) const override {
-        os << "[" << join(args, ",", print_deref<std::unique_ptr<AstArgument>>()) << "]";
+        os << "*" << type << "[" << join(args, ",", print_deref<std::unique_ptr<AstArgument>>()) << "]";
     }
 
     /** Creates a clone of this AST sub-structure */
     AstRecordInit* clone() const override {
-        auto res = new AstRecordInit();
+        auto res = new AstRecordInit(type);
         for (auto& cur : args) {
             res->args.push_back(std::unique_ptr<AstArgument>(cur->clone()));
         }
@@ -533,7 +546,7 @@ protected:
     bool equal(const AstNode& node) const override {
         assert(nullptr != dynamic_cast<const AstRecordInit*>(&node));
         const auto& other = static_cast<const AstRecordInit&>(node);
-        return equal_targets(args, other.args);
+        return equal_targets(args, other.args) && type == other.type;
     }
 };
 
