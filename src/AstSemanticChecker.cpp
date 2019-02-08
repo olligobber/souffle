@@ -149,6 +149,19 @@ void AstSemanticChecker::checkProgram(ErrorReport& report, const AstProgram& pro
         }
     });
 
+    // record initializations declare valid record types
+    visitDepthFirst(nodes, [&](const AstRecordInit& record) {
+        if (typeEnv.isType(record.getType())) {
+            if (!isRecordType(typeEnv.getType(record.getType()))) {
+                report.addError(
+                        "Type " + toString(record.getType()) + " is not a record type", record.getSrcLoc());
+            }
+        } else {
+            report.addError(
+                    "Type " + toString(record.getType()) + " has not been declared", record.getSrcLoc());
+        }
+    });
+
     // // - variables -
     // visitDepthFirst(nodes, [&](const AstVariable& var) {
     //     if (typeAnalysis.getTypes(&var).empty()) {
