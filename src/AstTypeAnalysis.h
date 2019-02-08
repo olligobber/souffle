@@ -42,7 +42,7 @@ private:
      * @param clause the clause to be typed
      * @return a map mapping each contained argument to a type
      */
-    static std::map<const AstArgument*, const AnalysisType*> analyseTypes(const TypeLattice& lat,
+    static std::map<const AstArgument*, const AnalysisType*> analyseTypes(TypeLattice& lat,
             const AstClause& clause, const AstProgram& program, std::ostream* debugStream = nullptr);
 
 public:
