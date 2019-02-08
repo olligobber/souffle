@@ -140,8 +140,15 @@ void AstSemanticChecker::checkProgram(ErrorReport& report, const AstProgram& pro
         }
     });
 
-    // // -- type checks --
-    //
+    // -- type checks --
+
+    // type casts name a valid type
+    visitDepthFirst(nodes, [&](const AstTypeCast& cast) {
+        if (!typeEnv.isType(cast.getType())) {
+            report.addError("Type cast is to undeclared type " + toString(cast.getType()), cast.getSrcLoc());
+        }
+    });
+
     // // - variables -
     // visitDepthFirst(nodes, [&](const AstVariable& var) {
     //     if (typeAnalysis.getTypes(&var).empty()) {

@@ -565,7 +565,7 @@ public:
             : value(std::move(value)), type(type) {}
 
     void print(std::ostream& os) const override {
-        os << " as " << type << *value;
+        os << "as " << type << " " << *value;
     }
 
     AstArgument* getValue() const {
