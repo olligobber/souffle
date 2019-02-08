@@ -21,7 +21,7 @@
 #include "TypeLattice.h"
 #include "TypeSystem.h"
 #include <map>
-#include <ostream>
+#include <sstream>
 
 namespace souffle {
 
@@ -33,6 +33,9 @@ class AstTranslationUnit;
 class TypeAnalysis : public AstAnalysis {
 private:
     std::map<const AstArgument*, const AnalysisType*> argumentTypes{};
+    std::stringstream analysisLogs{};
+
+    static std::set<const AstArgument*> getArguments(const AstClause& clause);
 
     /**
      * Analyse the given clause and computes for each contained argument a potential type. If the type is a
