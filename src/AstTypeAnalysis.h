@@ -57,11 +57,11 @@ public:
     /**
      * Get the computed type for the given argument.
      */
-    // const AnalysisType& getType(const AstArgument* argument) const; // {
-    // auto found = argumentTypes.find(argument);
-    // assert(found != argumentTypes.end() && "");
-    // return found->second;
-    // }
+    const AnalysisType* getType(const AstArgument* argument) const {
+        auto found = argumentTypes.find(argument);
+        assert(found != argumentTypes.end() && "Argument has a type");
+        return found->second;
+    }
 };
 
 }  // end of namespace souffle
