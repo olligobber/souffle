@@ -76,7 +76,7 @@ public:
         return lattice.isSubtype(solution.at(variable), bound);
     }
     void print(std::ostream& os) const override {
-        os << *variable << "<:" << *bound;
+        os << "type(" << *variable << ") <: " << *bound;
     }
 };
 
@@ -102,7 +102,7 @@ public:
         return lattice.isSubtype(solution.at(variable), solution.at(bound));
     }
     void print(std::ostream& os) const override {
-        os << *variable << "<:" << *bound;
+        os << "type(" << *variable << ") <: type(" << *bound << ")";
     }
 };
 
@@ -135,7 +135,7 @@ public:
                 solution.at(variable), lattice.join(solution.at(firstBound), solution.at(secondBound)));
     }
     void print(std::ostream& os) const override {
-        os << *variable << "<:(" << *firstBound << "∪" << *secondBound << ")";
+        os << "type(" << *variable << ") <: (type(" << *firstBound << ") ∪ type(" << *secondBound << "))";
     }
 };
 
@@ -205,16 +205,16 @@ public:
     }
     void print(std::ostream& os) const {
         for (FixedConstraint con : fixedCons) {
-            os <<  "    " << con << std::endl;
+            os << "   " << con << std::endl;
         }
         for (VarConstraint con : varCons) {
-            os <<  "    " << con << std::endl;
+            os << "   " << con << std::endl;
         }
         for (UnionConstraint con : unionCons) {
-            os <<  "    " << con << std::endl;
+            os << "   " << con << std::endl;
         }
         for (ImplicationConstraint con : implCons) {
-            os <<  "    " << con << std::endl;
+            os << "   " << con << std::endl;
         }
     }
     friend std::ostream& operator<<(std::ostream& out, const TypeConstraints& other) {
@@ -410,9 +410,7 @@ TypeConstraints getConstraints(
 
 std::set<const AstArgument*> TypeAnalysis::getArguments(const AstClause& clause) {
     std::set<const AstArgument*> args;
-    visitDepthFirst(clause, [&](const AstArgument& arg){
-        args.insert(&arg);
-    });
+    visitDepthFirst(clause, [&](const AstArgument& arg) { args.insert(&arg); });
     return args;
 }
 
@@ -423,7 +421,10 @@ typeSol TypeAnalysis::analyseTypes(
     if (debugStream != nullptr) {
         *debugStream << "Clause:\n" << clause << std::endl << std::endl;
         *debugStream << "Constraints:\n" << typeCons << std::endl;
-        *debugStream << "Types:\n" << types << std::endl;
+        *debugStream << "Types:" << std::endl;
+        for (std::pair<const AstArgument*, const AnalysisType*> iter : types) {
+            *debugStream << "   type(" << *iter.first << ") = " << *iter.second << std::endl;
+        }
     }
     return types;
 }
@@ -440,7 +441,7 @@ void TypeAnalysis::run(const AstTranslationUnit& translationUnit) {
     for (const AstRelation* rel : program->getRelations()) {
         for (const AstClause* clause : rel->getClauses()) {
             // Perform the type analysis
-            typeSol clauseArgumentTypes = analyseTypes(lattice,*clause,*program,debugStream);
+            typeSol clauseArgumentTypes = analyseTypes(lattice, *clause, *program, debugStream);
             argumentTypes.insert(clauseArgumentTypes.begin(), clauseArgumentTypes.end());
         }
     }
