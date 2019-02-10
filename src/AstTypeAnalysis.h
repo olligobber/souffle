@@ -29,13 +29,15 @@ class AstArgument;
 class AstClause;
 class AstProgram;
 class AstTranslationUnit;
+class AstVariable;
 
 class TypeAnalysis : public AstAnalysis {
 private:
     std::map<const AstArgument*, const AnalysisType*> argumentTypes{};
     std::stringstream analysisLogs{};
 
-    static std::set<const AstArgument*> getArguments(const AstClause& clause);
+    static std::set<const AstArgument*> getArguments(
+            std::map<std::string, const AstVariable*>* variables, const AstClause& clause);
 
     /**
      * Analyse the given clause and computes for each contained argument a potential type. If the type is a
