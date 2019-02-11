@@ -35,6 +35,7 @@ class TypeAnalysis : public AstAnalysis {
 private:
     std::map<const AstArgument*, const AnalysisType*> argumentTypes{};
     std::stringstream analysisLogs{};
+    TypeLattice lattice{};
 
     static std::set<const AstArgument*> getArguments(
             std::map<std::string, const AstVariable*>* variables, const AstClause& clause);
@@ -68,6 +69,10 @@ public:
         auto found = argumentTypes.find(argument);
         assert(found != argumentTypes.end() && "Argument has a type");
         return found->second;
+    }
+
+    const TypeLattice& getLattice() const {
+        return lattice;
     }
 };
 
