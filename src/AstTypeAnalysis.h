@@ -39,17 +39,6 @@ private:
     static std::set<const AstArgument*> getArguments(
             std::map<std::string, const AstVariable*>* variables, const AstClause& clause);
 
-    /**
-     * Analyse the given clause and computes for each contained argument a potential type. If the type is a
-     * bottom or top type, no consistent typing can be found and the rule can not be properly typed.
-     *
-     * @param lat a lattice containing available types
-     * @param clause the clause to be typed
-     * @return a map mapping each contained argument to a type
-     */
-    static std::map<const AstArgument*, const AnalysisType*> analyseTypes(TypeLattice& lat,
-            const AstClause& clause, const AstProgram& program, std::ostream* debugStream = nullptr);
-
 public:
     TypeAnalysis() = default;
 
@@ -58,6 +47,19 @@ public:
     void run(const AstTranslationUnit& translationUnit) override;
 
     void print(std::ostream& os) const override;
+
+    /**
+     * Analyse the given clause and computes for each contained argument a potential type. If the type is a
+     * bottom or top type, no consistent typing can be found and the rule can not be properly typed.
+     *
+     * @param lat a lattice containing available types
+     * @param clause the clause to be typed
+     * @param program the program the clause is contained in
+     * @param debugStream a pointer to the stream where debugging information should be printed
+     * @return a map mapping each contained argument to a type
+     */
+    static std::map<const AstArgument*, const AnalysisType*> analyseTypes(TypeLattice& lat,
+            const AstClause& clause, const AstProgram& program, std::ostream* debugStream = nullptr);
 
     /**
      * Get the computed type for the given argument.

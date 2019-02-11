@@ -31,6 +31,7 @@
 #include "Global.h"
 #include "GraphUtils.h"
 #include "PrecedenceGraph.h"
+#include "TypeLattice.h"
 #include "TypeSystem.h"
 #include <cassert>
 #include <cstddef>
@@ -214,6 +215,7 @@ bool MaterializeAggregationQueriesTransformer::materializeAggregationQueries(
 
     AstProgram& program = *translationUnit.getProgram();
     const TypeEnvironment& env = translationUnit.getAnalysis<TypeEnvironmentAnalysis>()->getTypeEnvironment();
+    TypeLattice lattice(env);
 
     // if an aggregator has a body consisting of more than an atom => create new relation
     int counter = 0;
@@ -280,13 +282,12 @@ bool MaterializeAggregationQueriesTransformer::materializeAggregationQueries(
             auto* rel = new AstRelation();
             rel->setName(relName);
             // add attributes
-            // TODO
-            // std::map<const AstArgument*, TypeSet> argTypes =
-            //         TypeAnalysis::analyseTypes(env, *aggClause, &program);
-            // for (const auto& cur : head->getArguments()) {
-            //     rel->addAttribute(std::make_unique<AstAttribute>(
-            //             toString(*cur), (isNumberType(argTypes[cur])) ? "number" : "symbol"));
-            // }
+            std::map<const AstArgument*, const AnalysisType*> argTypes =
+                    TypeAnalysis::analyseTypes(lattice, *aggClause, program);
+            for (const auto& cur : head->getArguments()) {
+                rel->addAttribute(std::make_unique<AstAttribute>(
+                        toString(*cur), (argTypes[cur]->isNumeric()) ? "number" : "symbol"));
+            }
 
             rel->addClause(std::unique_ptr<AstClause>(aggClause));
             program.appendRelation(std::unique_ptr<AstRelation>(rel));
