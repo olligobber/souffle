@@ -78,6 +78,9 @@ public:
     const TypeLattice& getLattice() const {
         return lattice;
     }
+
+    // Get clauses that can be typechecked
+    static std::vector<const AstClause*> getValidClauses(const AstProgram& program);
 };
 
 }  // end of namespace souffle
