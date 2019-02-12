@@ -67,7 +67,7 @@ public:
      */
     const AnalysisType* getType(const AstArgument* argument) const {
         auto found = argumentTypes.find(argument);
-        assert(found != argumentTypes.end() && "Argument has a type");
+        assert(found != argumentTypes.end() && "Argument must have a type");
         return found->second;
     }
 
