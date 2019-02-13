@@ -66,6 +66,7 @@ public:
      * Get the computed type for the given argument.
      */
     const AnalysisType* getType(const AstArgument* argument) const {
+        assert(lattice.isValid() && "Cannot determine type without a valid lattice");
         auto found = argumentTypes.find(argument);
         assert(found != argumentTypes.end() && "Argument must have a type");
         return found->second;
@@ -78,6 +79,9 @@ public:
     const TypeLattice& getLattice() const {
         return lattice;
     }
+
+    // Check if any clauses could not be typechecked
+    static bool anyInvalidClauses(const AstProgram& program);
 
     // Get clauses that can be typechecked
     static std::vector<const AstClause*> getValidClauses(const AstProgram& program);
