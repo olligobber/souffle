@@ -326,7 +326,7 @@ void AstSemanticChecker::checkProgram(ErrorReport& report, const AstProgram& pro
             if (targetType->isValid() && !lattice.isSubtype(targetType, lattice.getPrimitive(Kind::NUMBER))) {
                 report.addError(
                         "Aggregation variable is not a number, instead has type " + toString(*targetType),
-                        aggr.getSrcLoc());
+                        aggr.getTargetExpression()->getSrcLoc());
             }
         }
     });
