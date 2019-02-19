@@ -536,6 +536,9 @@ bool TypeAnalysis::anyInvalidClauses(const AstProgram& program) {
                 }
             });
             visitDepthFirst(*clause, [&](const AstTypeCast& cast) {
+                if (cast.getType() == "symbol" || cast.getType() == "number") {
+                    return;
+                }
                 if (program.getType(cast.getType()) == nullptr) {
                     skipClause = true;
                 }
@@ -590,6 +593,9 @@ std::vector<const AstClause*> TypeAnalysis::getValidClauses(const AstProgram& pr
                 }
             });
             visitDepthFirst(*clause, [&](const AstTypeCast& cast) {
+                if (cast.getType() == "symbol" || cast.getType() == "number") {
+                    return;
+                }
                 if (program.getType(cast.getType()) == nullptr) {
                     skipClause = true;
                 }
