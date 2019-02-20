@@ -23,6 +23,7 @@
 #include "AstNode.h"
 #include "AstRelationIdentifier.h"
 #include "AstType.h"
+#include "RelationRepresentation.h"
 
 #include <iostream>
 #include <memory>
@@ -92,6 +93,9 @@ protected:
      */
     std::vector<std::unique_ptr<AstIODirective>> ioDirectives;
 
+    /** Datastructure to use for this relation */
+    RelationRepresentation representation{RelationRepresentation::DEFAULT};
+
 public:
     AstRelation() = default;
 
@@ -136,36 +140,71 @@ public:
     /** Set qualifier associated with this relation */
     void setQualifier(int q) {
         qualifier = q;
+        if (q & EQREL_RELATION) {
+            representation = RelationRepresentation::EQREL;
+        } else if (q & BRIE_RELATION) {
+            representation = RelationRepresentation::BRIE;
+        } else if (q & BTREE_RELATION) {
+            representation = RelationRepresentation::BTREE;
+        }
+
+        if (q & INPUT_RELATION) {
+            ioDirectives.push_back(std::make_unique<AstIODirective>());
+            ioDirectives.back()->setAsInput();
+            ioDirectives.back()->setName(getName());
+            ioDirectives.back()->setSrcLoc(getSrcLoc());
+        }
+        if (q & OUTPUT_RELATION) {
+            ioDirectives.push_back(std::make_unique<AstIODirective>());
+            ioDirectives.back()->setAsOutput();
+            ioDirectives.back()->setName(getName());
+            ioDirectives.back()->setSrcLoc(getSrcLoc());
+        }
+        if (q & PRINTSIZE_RELATION) {
+            ioDirectives.push_back(std::make_unique<AstIODirective>());
+            ioDirectives.back()->setAsPrintSize();
+            ioDirectives.back()->setName(getName());
+            ioDirectives.back()->setSrcLoc(getSrcLoc());
+        }
+    }
+
+    /** Get representation for this relation */
+    RelationRepresentation getRepresentation() const {
+        return representation;
+    }
+
+    void setRepresentation(RelationRepresentation representation) {
+        this->representation = representation;
     }
 
     /** Check whether relation is an output relation */
     bool isOutput() const {
-        return (qualifier & OUTPUT_RELATION) != 0;
+        for (const auto& directive : ioDirectives) {
+            if (directive->isOutput()) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /** Check whether relation is an input relation */
     bool isInput() const {
-        return (qualifier & INPUT_RELATION) != 0;
-    }
-
-    /** Check whether relation is a brie relation */
-    bool isBrie() const {
-        return (qualifier & BRIE_RELATION) != 0;
-    }
-
-    /** Check whether relation is a btree relation */
-    bool isBTree() const {
-        return (qualifier & BTREE_RELATION) != 0;
-    }
-
-    /** Check whether relation is a equivalence relation */
-    bool isEqRel() const {
-        return (qualifier & EQREL_RELATION) != 0;
+        for (const auto& directive : ioDirectives) {
+            if (directive->isInput()) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /** Check whether relation is an input relation */
     bool isPrintSize() const {
-        return (qualifier & PRINTSIZE_RELATION) != 0;
+        for (const auto& directive : ioDirectives) {
+            if (directive->isPrintSize()) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /** Check whether relation is an output relation */
@@ -238,15 +277,7 @@ public:
         if (isInline()) {
             os << "inline ";
         }
-        if (isBTree()) {
-            os << "btree ";
-        }
-        if (isBrie()) {
-            os << "brie ";
-        }
-        if (isEqRel()) {
-            os << "eqrel ";
-        }
+        os << representation << " ";
     }
 
     /** Creates a clone of this AST sub-structure */
@@ -332,14 +363,6 @@ public:
 
     void addIODirectives(std::unique_ptr<AstIODirective> directive) {
         assert(directive && "Undefined directive");
-        // Make sure the old style qualifiers still work.
-        if (directive->isInput()) {
-            qualifier |= INPUT_RELATION;
-        } else if (directive->isOutput()) {
-            qualifier |= OUTPUT_RELATION;
-        } else if (directive->isPrintSize()) {
-            qualifier |= PRINTSIZE_RELATION;
-        }
         ioDirectives.push_back(std::move(directive));
     }
 

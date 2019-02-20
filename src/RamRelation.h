@@ -19,6 +19,7 @@
 #include "ParallelUtils.h"
 #include "RamNode.h"
 #include "RamTypes.h"
+#include "RelationRepresentation.h"
 #include "SymbolMask.h"
 #include "SymbolTable.h"
 #include "Table.h"
@@ -52,24 +53,16 @@ protected:
     /** TODO (#541): legacy, i.e., duplicated information */
     const SymbolMask mask;
 
-    /** Relation qualifiers */
-    // TODO: Simplify interface
-    const bool input;     // input relation
-    const bool output;    // output relation
-    const bool computed;  // either output or printed
-
-    const bool btree;  // btree data-structure
-    const bool brie;   // brie data-structure
-    const bool eqrel;  // equivalence relation
+    const RelationRepresentation representation;
 
 public:
     RamRelation(const std::string name, const size_t arity, const std::vector<std::string> attributeNames,
-            const std::vector<std::string> attributeTypeQualifiers, const SymbolMask mask, const bool input,
-            const bool computed, const bool output, const bool btree, const bool brie, const bool eqrel)
+            const std::vector<std::string> attributeTypeQualifiers, const SymbolMask mask,
+            const RelationRepresentation representation)
             : RamNode(RN_Relation), name(std::move(name)), arity(arity),
               attributeNames(std::move(attributeNames)),
               attributeTypeQualifiers(std::move(attributeTypeQualifiers)), mask(std::move(mask)),
-              input(input), output(output), computed(computed), btree(btree), brie(brie), eqrel(eqrel) {
+              representation(representation) {
         assert(this->attributeNames.size() == arity || this->attributeNames.empty());
         assert(this->attributeTypeQualifiers.size() == arity || this->attributeTypeQualifiers.empty());
     }
@@ -99,39 +92,14 @@ public:
         return mask;
     }
 
-    /** Is input relation */
-    const bool isInput() const {
-        return input;
-    }
-
-    /** Is relation computed */
-    const bool isComputed() const {
-        return computed;
-    }
-
-    /** Is output relation */
-    const bool isOutput() const {
-        return output;
-    }
-
     /** Is nullary relation */
     const bool isNullary() const {
         return arity == 0;
     }
 
-    /** Is BTree relation */
-    const bool isBTree() const {
-        return btree;
-    }
-
-    /** Is Brie relation */
-    const bool isBrie() const {
-        return brie;
-    }
-
-    /** Is equivalence relation */
-    const bool isEqRel() const {
-        return eqrel;
+    /** Relation representation type */
+    const RelationRepresentation getRepresentation() const {
+        return representation;
     }
 
     // Flag to check whether the data-structure
@@ -164,9 +132,7 @@ public:
         }
         out << ")";
 
-        if (isBTree()) out << " btree";
-        if (isBrie()) out << " brie";
-        if (isEqRel()) out << " eqrel";
+        out << " " << representation;
     }
 
     /** Obtain list of child nodes */
@@ -176,8 +142,8 @@ public:
 
     /** Create clone */
     RamRelation* clone() const override {
-        RamRelation* res = new RamRelation(name, arity, attributeNames, attributeTypeQualifiers, mask, input,
-                computed, output, btree, brie, eqrel);
+        RamRelation* res =
+                new RamRelation(name, arity, attributeNames, attributeTypeQualifiers, mask, representation);
         return res;
     }
 
@@ -191,9 +157,7 @@ protected:
         const auto& other = static_cast<const RamRelation&>(node);
         return name == other.name && arity == other.arity && attributeNames == other.attributeNames &&
                attributeTypeQualifiers == other.attributeTypeQualifiers && mask == other.mask &&
-               isInput() == other.isInput() && isOutput() == other.isOutput() &&
-               isComputed() == other.isComputed() && isBTree() == other.isBTree() &&
-               isBrie() == other.isBrie() && isEqRel() == other.isEqRel() && isTemp() == other.isTemp();
+               representation == other.representation && isTemp() == other.isTemp();
     }
 };
 
@@ -228,39 +192,14 @@ public:
         return relation->isNullary();
     }
 
-    /* Is BTree relation */
-    const bool isBTree() const {
-        return relation->isBTree();
-    }
-
-    /** Is Brie relation */
-    const bool isBrie() const {
-        return relation->isBrie();
-    }
-
-    /** Is equivalence relation */
-    const bool isEqRel() const {
-        return relation->isEqRel();
+    /** Relation representation type */
+    const RelationRepresentation getRepresentation() const {
+        return relation->getRepresentation();
     }
 
     /** Is temp relation */
     const bool isTemp() const {
         return relation->isTemp();
-    }
-
-    /** Is input relation */
-    const bool isInput() const {
-        return relation->isInput();
-    }
-
-    /** Is computed relation */
-    const bool isComputed() const {
-        return relation->isComputed();
-    }
-
-    /** Is output relation */
-    const bool isOutput() const {
-        return relation->isOutput();
     }
 
     /** Get symbol mask */

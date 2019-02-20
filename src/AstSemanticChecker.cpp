@@ -775,7 +775,7 @@ void AstSemanticChecker::checkRelationDeclaration(ErrorReport& report, const Typ
 
 void AstSemanticChecker::checkRelation(ErrorReport& report, const TypeEnvironment& typeEnv,
         const AstProgram& program, const AstRelation& relation, const RecursiveClauses& recursiveClauses) {
-    if (relation.isEqRel()) {
+    if (relation.getRepresentation() == RelationRepresentation::EQREL) {
         if (relation.getArity() == 2) {
             if (relation.getAttribute(0)->getTypeName() != relation.getAttribute(1)->getTypeName()) {
                 report.addError(
@@ -1188,22 +1188,15 @@ void AstSemanticChecker::checkInlining(
         ErrorReport& report, const AstProgram& program, const PrecedenceGraph& precedenceGraph) {
     // Find all inlined relations
     AstRelationSet inlinedRelations;
-    visitDepthFirst(program, [&](const AstRelation& relation) {
-        if (relation.isInline()) {
-            inlinedRelations.insert(&relation);
-
-            // Inlined relations cannot be computed or input relations
-            if (relation.isComputed()) {
-                report.addError("Computed relation " + toString(relation.getName()) + " cannot be inlined",
-                        relation.getSrcLoc());
-            }
-
-            if (relation.isInput()) {
-                report.addError("Input relation " + toString(relation.getName()) + " cannot be inlined",
-                        relation.getSrcLoc());
+    for (const auto& relation : program.getRelations()) {
+        if (relation->isInline()) {
+            inlinedRelations.insert(relation);
+            if (!relation->getIODirectives().empty()) {
+                report.addError("IO relation " + toString(relation->getName()) + " cannot be inlined",
+                        relation->getSrcLoc());
             }
         }
-    });
+    }
 
     // Check 1:
     // Let G' be the subgraph of the precedence graph G containing only those nodes
